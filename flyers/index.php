@@ -29,27 +29,24 @@ if (!file_exists($cache) || (time() - filemtime($cache) > 3600)) {
             curl_setopt($curl, CURLOPT_FILE, $fp);
             curl_exec($curl);
             curl_close($curl);
-            $t1 = microtime(true);
             $img = new Imagick($dir . '/temp.pdf');
-            $t2 = microtime(true);
             $count = $img->getNumberImages();
-            $t3 = microtime(true);
             for ($i=0; $i<$count; $i++) {
-                $t4 = microtime(true);
                 $img->setIteratorIndex($i);
                 $img->setImageFormat('jpeg');
                 $img->setImageCompressionQuality(100);
                 $img->setResolution(300,300);
                 $file = $dir . '/' . str_pad($i, 2, '0', STR_PAD_LEFT) . '.jpg';
                 $img->writeImage($file);
-                $t5 = microtime(true);
             }
             unlink($dir . '/temp.pdf');
         }
         $images = scandir($dir);
         $images = array_filter($images, function($i) { return substr($i, -4) === '.jpg'; });
         $urls = array_map(function($i) use ($hash) { return 'http://store.wholefoods.coop/api/flyers/img/' . $hash . '/' . basename($i); }, $images);
-        $pdfs[] = array_values($urls);
+        if (count($urls) > 0) {
+            $pdfs[] = array_values($urls);
+        }
     }
     file_put_contents($cache, json_encode($pdfs));
 }
